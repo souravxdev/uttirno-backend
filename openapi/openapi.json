@@ -50,6 +50,9 @@
           },
           "409": {
             "description": "Email is already registered"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
           }
         },
         "summary": "Register a new learner account",
@@ -85,6 +88,9 @@
           },
           "401": {
             "description": "Invalid email or password"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
           }
         },
         "summary": "Log in with email and password",
@@ -120,6 +126,9 @@
           },
           "401": {
             "description": "Invalid or expired refresh token"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
           }
         },
         "summary": "Exchange a refresh token for a new token pair",
@@ -1890,6 +1899,44 @@
           "score"
         ]
       },
+      "SubjectBreakdownDto": {
+        "type": "object",
+        "properties": {
+          "subjectSlug": {
+            "type": "string",
+            "example": "bangla"
+          },
+          "subjectName": {
+            "type": "string",
+            "example": "বাংলা"
+          },
+          "correct": {
+            "type": "number",
+            "example": 3
+          },
+          "wrong": {
+            "type": "number",
+            "example": 1
+          },
+          "skipped": {
+            "type": "number",
+            "example": 0
+          },
+          "score": {
+            "type": "number",
+            "example": 2.5,
+            "description": "correct − wrong × 0.50"
+          }
+        },
+        "required": [
+          "subjectSlug",
+          "subjectName",
+          "correct",
+          "wrong",
+          "skipped",
+          "score"
+        ]
+      },
       "SessionResultItemDto": {
         "type": "object",
         "properties": {
@@ -1979,6 +2026,13 @@
           "totals": {
             "$ref": "#/components/schemas/SessionResultTotalsDto"
           },
+          "subjectBreakdown": {
+            "description": "Per-subject performance, ordered by subject order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectBreakdownDto"
+            }
+          },
           "items": {
             "type": "array",
             "items": {
@@ -1994,6 +2048,7 @@
           "startedAt",
           "submittedAt",
           "totals",
+          "subjectBreakdown",
           "items"
         ]
       }

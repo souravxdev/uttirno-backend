@@ -252,6 +252,13 @@ export class QuizSessionsService {
             correctIndex: true,
             explanation: true,
             language: true,
+            topic: {
+              select: {
+                subject: {
+                  select: { slug: true, name: true, order: true },
+                },
+              },
+            },
           },
         },
       },
@@ -260,6 +267,47 @@ export class QuizSessionsService {
     const correct = answers.filter((a) => a.isCorrect === true).length;
     const wrong = answers.filter((a) => a.isCorrect === false).length;
     const skipped = answers.filter((a) => a.selectedIndex === null).length;
+
+    const bySubject = new Map<
+      string,
+      {
+        subjectSlug: string;
+        subjectName: string;
+        subjectOrder: number;
+        correct: number;
+        wrong: number;
+        skipped: number;
+      }
+    >();
+    for (const answer of answers) {
+      const subject = answer.question.topic.subject;
+      const bucket = bySubject.get(subject.slug) ?? {
+        subjectSlug: subject.slug,
+        subjectName: subject.name,
+        subjectOrder: subject.order,
+        correct: 0,
+        wrong: 0,
+        skipped: 0,
+      };
+      if (answer.selectedIndex === null) {
+        bucket.skipped += 1;
+      } else if (answer.isCorrect) {
+        bucket.correct += 1;
+      } else {
+        bucket.wrong += 1;
+      }
+      bySubject.set(subject.slug, bucket);
+    }
+    const subjectBreakdown = [...bySubject.values()]
+      .sort((a, b) => a.subjectOrder - b.subjectOrder)
+      .map((bucket) => ({
+        subjectSlug: bucket.subjectSlug,
+        subjectName: bucket.subjectName,
+        correct: bucket.correct,
+        wrong: bucket.wrong,
+        skipped: bucket.skipped,
+        score: (bucket.correct * 100 - bucket.wrong * 50) / 100,
+      }));
 
     return {
       id: session.id,
@@ -276,6 +324,7 @@ export class QuizSessionsService {
         negativeMarks: wrong * 0.5,
         score: session.score === null ? 0 : Number(session.score),
       },
+      subjectBreakdown,
       items: answers.map((answer) => ({
         order: answer.order,
         questionId: answer.questionId,

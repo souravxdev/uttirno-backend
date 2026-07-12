@@ -15,8 +15,10 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { RateLimit, RateLimitGuard } from '../common/rate-limit.guard';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import {
   loginSchema,
@@ -40,12 +42,15 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
 
 @ApiTags('auth')
+@UseGuards(RateLimitGuard)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post('register')
+  @RateLimit(10, 60)
   @HttpCode(HttpStatus.CREATED)
+  @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })
   @ApiOperation({ summary: 'Register a new learner account' })
   @ApiBody({ type: RegisterRequestDto })
   @ApiCreatedResponse({ type: AuthResponseDto })
@@ -57,7 +62,9 @@ export class AuthController {
   }
 
   @Post('login')
+  @RateLimit(20, 60)
   @HttpCode(HttpStatus.OK)
+  @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })
   @ApiOperation({ summary: 'Log in with email and password' })
   @ApiBody({ type: LoginRequestDto })
   @ApiOkResponse({ type: AuthResponseDto })
@@ -69,7 +76,9 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @RateLimit(30, 60)
   @HttpCode(HttpStatus.OK)
+  @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })
   @ApiOperation({ summary: 'Exchange a refresh token for a new token pair' })
   @ApiBody({ type: RefreshRequestDto })
   @ApiOkResponse({ type: AuthResponseDto })

@@ -200,6 +200,23 @@ describe('Quiz sessions (e2e)', () => {
     );
     expect(result.items.every((i) => i.explanation.length > 0)).toBe(true);
 
+    // Subject-wise breakdown must reconcile with the totals.
+    const breakdownSums = result.subjectBreakdown.reduce(
+      (acc, s) => ({
+        correct: acc.correct + s.correct,
+        wrong: acc.wrong + s.wrong,
+        skipped: acc.skipped + s.skipped,
+        score: acc.score + s.score,
+      }),
+      { correct: 0, wrong: 0, skipped: 0, score: 0 },
+    );
+    expect(breakdownSums).toEqual({
+      correct: 2,
+      wrong: 1,
+      skipped: 1,
+      score: 1.5,
+    });
+
     // Double submit → 409; further saves → 409.
     await server()
       .post(`/api/sessions/${play.id}/submit`)

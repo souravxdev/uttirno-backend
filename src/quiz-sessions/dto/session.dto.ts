@@ -177,6 +177,26 @@ export class SessionResultItemDto {
   explanation: string;
 }
 
+export class SubjectBreakdownDto {
+  @ApiProperty({ example: 'bangla' })
+  subjectSlug: string;
+
+  @ApiProperty({ example: 'বাংলা' })
+  subjectName: string;
+
+  @ApiProperty({ example: 3 })
+  correct: number;
+
+  @ApiProperty({ example: 1 })
+  wrong: number;
+
+  @ApiProperty({ example: 0 })
+  skipped: number;
+
+  @ApiProperty({ example: 2.5, description: 'correct − wrong × 0.50' })
+  score: number;
+}
+
 export class SessionResultTotalsDto {
   @ApiProperty({ example: 7 })
   correct: number;
@@ -218,6 +238,12 @@ export class SessionResultDto {
 
   @ApiProperty({ type: SessionResultTotalsDto })
   totals: SessionResultTotalsDto;
+
+  @ApiProperty({
+    type: [SubjectBreakdownDto],
+    description: 'Per-subject performance, ordered by subject order',
+  })
+  subjectBreakdown: SubjectBreakdownDto[];
 
   @ApiProperty({ type: [SessionResultItemDto] })
   items: SessionResultItemDto[];

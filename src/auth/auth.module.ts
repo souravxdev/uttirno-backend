@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { RateLimitGuard } from '../common/rate-limit.guard';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -10,7 +11,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   // so JwtModule needs no global registration options.
   imports: [PassportModule, JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, RateLimitGuard],
   exports: [AuthService],
 })
 export class AuthModule {}
