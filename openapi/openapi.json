@@ -182,6 +182,412 @@
           "taxonomy"
         ]
       }
+    },
+    "/api/questions": {
+      "get": {
+        "operationId": "QuestionsController_list",
+        "parameters": [
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "EASY",
+                "MEDIUM",
+                "HARD"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "BN",
+                "EN"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PAST_PAPER",
+                "ORIGINAL",
+                "AI_GENERATED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "topic",
+            "required": false,
+            "in": "query",
+            "description": "Topic slug",
+            "schema": {}
+          },
+          {
+            "name": "subject",
+            "required": false,
+            "in": "query",
+            "description": "Subject slug",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicQuestionListDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Browse PUBLISHED questions (learner view — no answers, no explanations)",
+        "tags": [
+          "questions"
+        ]
+      }
+    },
+    "/api/admin/questions": {
+      "get": {
+        "operationId": "AdminQuestionsController_list",
+        "parameters": [
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "EASY",
+                "MEDIUM",
+                "HARD"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "language",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "BN",
+                "EN"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PAST_PAPER",
+                "ORIGINAL",
+                "AI_GENERATED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "topic",
+            "required": false,
+            "in": "query",
+            "description": "Topic slug",
+            "schema": {}
+          },
+          {
+            "name": "subject",
+            "required": false,
+            "in": "query",
+            "description": "Subject slug",
+            "schema": {}
+          },
+          {
+            "name": "topicId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "DRAFT",
+                "IN_REVIEW",
+                "PUBLISHED"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuestionListDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Requires ADMIN role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List questions (any status, includes answers)",
+        "tags": [
+          "admin/questions"
+        ]
+      },
+      "post": {
+        "operationId": "AdminQuestionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionCreateRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuestionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Requires ADMIN role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a question (invariants zod-enforced)",
+        "tags": [
+          "admin/questions"
+        ]
+      }
+    },
+    "/api/admin/questions/{id}": {
+      "get": {
+        "operationId": "AdminQuestionsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuestionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Requires ADMIN role"
+          },
+          "404": {
+            "description": "Question not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Question detail (includes answer key)",
+        "tags": [
+          "admin/questions"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminQuestionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionUpdateRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuestionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Requires ADMIN role"
+          },
+          "404": {
+            "description": "Question not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a question — merged entity is re-validated against invariants",
+        "tags": [
+          "admin/questions"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminQuestionsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Requires ADMIN role"
+          },
+          "404": {
+            "description": "Question not found"
+          },
+          "409": {
+            "description": "Question has recorded answers and cannot be deleted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a question",
+        "tags": [
+          "admin/questions"
+        ]
+      }
     }
   },
   "info": {
@@ -433,6 +839,412 @@
           "name",
           "subjects"
         ]
+      },
+      "SubjectRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "example": "bangla"
+          },
+          "name": {
+            "type": "string",
+            "example": "বাংলা"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ]
+      },
+      "TopicRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "example": "sahitto"
+          },
+          "name": {
+            "type": "string",
+            "example": "সাহিত্য"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/SubjectRefDto"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "subject"
+        ]
+      },
+      "PublicQuestionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "stem": {
+            "type": "string",
+            "example": "'সোনার তরী' কাব্যগ্রন্থের রচয়িতা কে?"
+          },
+          "options": {
+            "minItems": 4,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "EASY",
+              "MEDIUM",
+              "HARD"
+            ]
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "PAST_PAPER",
+              "ORIGINAL",
+              "AI_GENERATED"
+            ]
+          },
+          "sourceYear": {
+            "type": "number",
+            "nullable": true,
+            "example": 2015
+          },
+          "sourceExam": {
+            "type": "string",
+            "nullable": true,
+            "example": "৩৫তম বিসিএস"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "BN",
+              "EN"
+            ]
+          },
+          "topic": {
+            "$ref": "#/components/schemas/TopicRefDto"
+          }
+        },
+        "required": [
+          "id",
+          "stem",
+          "options",
+          "difficulty",
+          "sourceType",
+          "sourceYear",
+          "sourceExam",
+          "language",
+          "topic"
+        ]
+      },
+      "PublicQuestionListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicQuestionDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 8
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "number",
+            "example": 20
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "AdminQuestionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "stem": {
+            "type": "string",
+            "example": "'সোনার তরী' কাব্যগ্রন্থের রচয়িতা কে?"
+          },
+          "options": {
+            "minItems": 4,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "EASY",
+              "MEDIUM",
+              "HARD"
+            ]
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "PAST_PAPER",
+              "ORIGINAL",
+              "AI_GENERATED"
+            ]
+          },
+          "sourceYear": {
+            "type": "number",
+            "nullable": true,
+            "example": 2015
+          },
+          "sourceExam": {
+            "type": "string",
+            "nullable": true,
+            "example": "৩৫তম বিসিএস"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "BN",
+              "EN"
+            ]
+          },
+          "topic": {
+            "$ref": "#/components/schemas/TopicRefDto"
+          },
+          "correctIndex": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "IN_REVIEW",
+              "PUBLISHED"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "stem",
+          "options",
+          "difficulty",
+          "sourceType",
+          "sourceYear",
+          "sourceExam",
+          "language",
+          "topic",
+          "correctIndex",
+          "explanation",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "AdminQuestionListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminQuestionDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "QuestionCreateRequestDto": {
+        "type": "object",
+        "properties": {
+          "topicId": {
+            "type": "string"
+          },
+          "stem": {
+            "type": "string",
+            "example": "বাংলা ভাষার প্রাচীনতম নিদর্শন কোনটি?"
+          },
+          "options": {
+            "minItems": 4,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "correctIndex": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "EASY",
+              "MEDIUM",
+              "HARD"
+            ],
+            "default": "MEDIUM"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "PAST_PAPER",
+              "ORIGINAL",
+              "AI_GENERATED"
+            ]
+          },
+          "sourceYear": {
+            "type": "number",
+            "example": 2017
+          },
+          "sourceExam": {
+            "type": "string",
+            "example": "৩৮তম বিসিএস"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "IN_REVIEW",
+              "PUBLISHED"
+            ],
+            "default": "DRAFT"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "BN",
+              "EN"
+            ]
+          }
+        },
+        "required": [
+          "topicId",
+          "stem",
+          "options",
+          "correctIndex",
+          "explanation",
+          "sourceType",
+          "language"
+        ]
+      },
+      "QuestionUpdateRequestDto": {
+        "type": "object",
+        "properties": {
+          "topicId": {
+            "type": "string"
+          },
+          "stem": {
+            "type": "string"
+          },
+          "options": {
+            "minItems": 4,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "correctIndex": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "EASY",
+              "MEDIUM",
+              "HARD"
+            ]
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "PAST_PAPER",
+              "ORIGINAL",
+              "AI_GENERATED"
+            ]
+          },
+          "sourceYear": {
+            "type": "number"
+          },
+          "sourceExam": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "IN_REVIEW",
+              "PUBLISHED"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "BN",
+              "EN"
+            ]
+          }
+        }
       }
     }
   }

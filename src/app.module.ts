@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { validateEnv } from './config/env';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { QuestionsModule } from './questions/questions.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { TaxonomyModule } from './taxonomy/taxonomy.module';
     HealthModule,
     AuthModule,
     TaxonomyModule,
+    QuestionsModule,
   ],
 })
 export class AppModule {}
