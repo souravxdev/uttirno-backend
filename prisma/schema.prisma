@@ -146,6 +146,7 @@ model Answer {
   session       QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   questionId    String
   question      Question    @relation(fields: [questionId], references: [id])
+  order         Int         @default(0)
   selectedIndex Int?
   isCorrect     Boolean?
   timeTakenSec  Int?
@@ -153,4 +154,5 @@ model Answer {
   updatedAt     DateTime    @updatedAt
 
   @@unique([sessionId, questionId])
+  @@index([sessionId, order])
 }

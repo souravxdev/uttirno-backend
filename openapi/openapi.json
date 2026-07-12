@@ -588,6 +588,350 @@
           "admin/questions"
         ]
       }
+    },
+    "/api/sessions": {
+      "get": {
+        "operationId": "QuizSessionsController_history",
+        "parameters": [
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionHistoryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Attempt history (own sessions, newest first)",
+        "tags": [
+          "sessions"
+        ]
+      },
+      "post": {
+        "operationId": "QuizSessionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSummaryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a mock exam session (snapshots N random PUBLISHED questions; clock not started)",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}": {
+      "get": {
+        "operationId": "QuizSessionsController_summary",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSummaryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Session summary (any status)",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/start": {
+      "post": {
+        "operationId": "QuizSessionsController_start",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionPlayStateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "409": {
+            "description": "Session has already been started"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start the clock (CREATED → IN_PROGRESS)",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/play": {
+      "get": {
+        "operationId": "QuizSessionsController_play",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionPlayStateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "409": {
+            "description": "Session has ended — fetch the result"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Play state for the exam player (questions WITHOUT answers, saved selections, server clock) — resume-safe",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/answers": {
+      "patch": {
+        "operationId": "QuizSessionsController_saveAnswer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAnswerRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveAnswerResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "409": {
+            "description": "Session is not accepting answers"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Save one answer (server-side persistence on every selection)",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/submit": {
+      "post": {
+        "operationId": "QuizSessionsController_submit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "409": {
+            "description": "Session already submitted / not started"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Submit and score (server-side, 0.50 negative marking) — first reveal of answers",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/sessions/{id}/result": {
+      "get": {
+        "operationId": "QuizSessionsController_result",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "409": {
+            "description": "Results are available only after submission"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Full result with correct answers and explanations",
+        "tags": [
+          "sessions"
+        ]
+      }
     }
   },
   "info": {
@@ -1245,6 +1589,413 @@
             ]
           }
         }
+      },
+      "SessionSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "IN_PROGRESS",
+              "SUBMITTED",
+              "EXPIRED"
+            ]
+          },
+          "questionCount": {
+            "type": "number"
+          },
+          "timeLimitSec": {
+            "type": "number"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "score": {
+            "type": "number",
+            "nullable": true,
+            "example": 6.5,
+            "description": "Final score — present only after SUBMITTED/EXPIRED"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "questionCount",
+          "timeLimitSec",
+          "startedAt",
+          "expiresAt",
+          "submittedAt",
+          "score",
+          "createdAt"
+        ]
+      },
+      "SessionHistoryDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionSummaryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "CreateSessionRequestDto": {
+        "type": "object",
+        "properties": {
+          "questionCount": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 200,
+            "example": 10
+          },
+          "timeLimitSec": {
+            "type": "number",
+            "minimum": 60,
+            "maximum": 14400,
+            "example": 600,
+            "description": "Exam duration in seconds"
+          },
+          "subjects": {
+            "example": [
+              "bangla",
+              "general-knowledge"
+            ],
+            "description": "Restrict questions to these subject slugs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "questionCount",
+          "timeLimitSec"
+        ]
+      },
+      "SessionQuestionDto": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "number",
+            "example": 0
+          },
+          "questionId": {
+            "type": "string"
+          },
+          "stem": {
+            "type": "string",
+            "example": "'সোনার তরী' কাব্যগ্রন্থের রচয়িতা কে?"
+          },
+          "options": {
+            "minItems": 4,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "BN",
+              "EN"
+            ]
+          },
+          "selectedIndex": {
+            "type": "number",
+            "nullable": true,
+            "description": "Previously saved selection (resume support)"
+          }
+        },
+        "required": [
+          "order",
+          "questionId",
+          "stem",
+          "options",
+          "language",
+          "selectedIndex"
+        ]
+      },
+      "SessionPlayStateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "IN_PROGRESS",
+              "SUBMITTED",
+              "EXPIRED"
+            ]
+          },
+          "questionCount": {
+            "type": "number"
+          },
+          "timeLimitSec": {
+            "type": "number"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "remainingSec": {
+            "type": "number",
+            "nullable": true,
+            "description": "Server-computed seconds left; null while CREATED"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionQuestionDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "questionCount",
+          "timeLimitSec",
+          "startedAt",
+          "expiresAt",
+          "remainingSec",
+          "questions"
+        ]
+      },
+      "SaveAnswerRequestDto": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string"
+          },
+          "selectedIndex": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 3,
+            "description": "null clears the selection (question counts as skipped)"
+          },
+          "timeTakenSec": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "questionId",
+          "selectedIndex"
+        ]
+      },
+      "SaveAnswerResponseDto": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string"
+          },
+          "selectedIndex": {
+            "type": "number",
+            "nullable": true
+          },
+          "remainingSec": {
+            "type": "number",
+            "description": "Server-computed seconds left"
+          }
+        },
+        "required": [
+          "questionId",
+          "selectedIndex",
+          "remainingSec"
+        ]
+      },
+      "SessionResultTotalsDto": {
+        "type": "object",
+        "properties": {
+          "correct": {
+            "type": "number",
+            "example": 7
+          },
+          "wrong": {
+            "type": "number",
+            "example": 2
+          },
+          "skipped": {
+            "type": "number",
+            "example": 1
+          },
+          "positiveMarks": {
+            "type": "number",
+            "example": 7,
+            "description": "correct × 1.00"
+          },
+          "negativeMarks": {
+            "type": "number",
+            "example": 1,
+            "description": "wrong × 0.50"
+          },
+          "score": {
+            "type": "number",
+            "example": 6,
+            "description": "positiveMarks − negativeMarks"
+          }
+        },
+        "required": [
+          "correct",
+          "wrong",
+          "skipped",
+          "positiveMarks",
+          "negativeMarks",
+          "score"
+        ]
+      },
+      "SessionResultItemDto": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "number"
+          },
+          "questionId": {
+            "type": "string"
+          },
+          "stem": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "BN",
+              "EN"
+            ]
+          },
+          "selectedIndex": {
+            "type": "number",
+            "nullable": true
+          },
+          "correctIndex": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "isCorrect": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "null = skipped"
+          },
+          "explanation": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order",
+          "questionId",
+          "stem",
+          "options",
+          "language",
+          "selectedIndex",
+          "correctIndex",
+          "isCorrect",
+          "explanation"
+        ]
+      },
+      "SessionResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "IN_PROGRESS",
+              "SUBMITTED",
+              "EXPIRED"
+            ]
+          },
+          "questionCount": {
+            "type": "number"
+          },
+          "timeLimitSec": {
+            "type": "number"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "totals": {
+            "$ref": "#/components/schemas/SessionResultTotalsDto"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionResultItemDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "questionCount",
+          "timeLimitSec",
+          "startedAt",
+          "submittedAt",
+          "totals",
+          "items"
+        ]
       }
     }
   }
