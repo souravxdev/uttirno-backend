@@ -15,7 +15,7 @@ describe('Health (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    configureApp(app);
+    configureApp(app, 'http://localhost:4200');
     await app.init();
   });
 

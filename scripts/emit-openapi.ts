@@ -14,7 +14,8 @@ import { configureApp } from '../src/app.setup';
 
 async function emitOpenApi(): Promise<void> {
   const app = await NestFactory.create(AppModule, { logger: false });
-  configureApp(app);
+  // CORS origin is irrelevant to the emitted contract; any value works here.
+  configureApp(app, 'http://localhost:4200');
 
   const { version } = JSON.parse(
     readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
