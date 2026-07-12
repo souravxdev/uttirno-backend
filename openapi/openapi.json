@@ -17,7 +17,7 @@
             }
           }
         },
-        "summary": "Service health and version",
+        "summary": "Service health, version and DB connectivity",
         "tags": [
           "health"
         ]
@@ -39,18 +39,32 @@
         "properties": {
           "status": {
             "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
             "example": "ok",
-            "description": "Service liveness indicator"
+            "description": "'ok' when all dependencies are reachable"
           },
           "version": {
             "type": "string",
             "example": "0.0.1",
             "description": "API version (from package.json)"
+          },
+          "db": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "example": "up",
+            "description": "Database connectivity (SELECT 1 probe)"
           }
         },
         "required": [
           "status",
-          "version"
+          "version",
+          "db"
         ]
       }
     }

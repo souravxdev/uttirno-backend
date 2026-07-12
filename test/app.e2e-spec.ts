@@ -23,7 +23,9 @@ describe('Health (e2e)', () => {
     await app.close();
   });
 
-  it('GET /api/health returns status and version', () => {
+  // Requires the dev database (docker compose up -d) — PrismaService
+  // connects on module init.
+  it('GET /api/health returns status, version and db connectivity', () => {
     return request(app.getHttpServer())
       .get('/api/health')
       .expect(200)
@@ -31,6 +33,7 @@ describe('Health (e2e)', () => {
         const body = res.body as HealthResponseDto;
         expect(body.status).toBe('ok');
         expect(typeof body.version).toBe('string');
+        expect(body.db).toBe('up');
       });
   });
 });
