@@ -1,4 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Difficulty, QuestionLanguage } from '../../generated/prisma/enums';
+import { AdminQuestionDto } from '../../questions/dto/question.dto';
 
 export class RowErrorItemDto {
   @ApiProperty({ example: 'correctOption' })
@@ -37,4 +39,44 @@ export class ImportReportDto {
 
   @ApiProperty({ type: [RowErrorDto] })
   rowErrors: RowErrorDto[];
+}
+
+export class AiDraftRequestDto {
+  @ApiProperty({ description: 'Topic the drafts belong to' })
+  topicId: string;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 10, default: 5 })
+  count?: number;
+
+  @ApiPropertyOptional({
+    enum: Object.values(Difficulty),
+    default: 'MEDIUM',
+  })
+  difficulty?: Difficulty;
+
+  @ApiProperty({ enum: Object.values(QuestionLanguage) })
+  language: QuestionLanguage;
+}
+
+export class AiDraftReportDto {
+  @ApiProperty({ example: 5 })
+  requested: number;
+
+  @ApiProperty({
+    example: 4,
+    description: 'Drafts created as AI_GENERATED + IN_REVIEW',
+  })
+  created: number;
+
+  @ApiProperty({ example: 1 })
+  skippedDuplicates: number;
+
+  @ApiProperty({
+    example: 0,
+    description: 'Drafts the model returned malformed',
+  })
+  failed: number;
+
+  @ApiProperty({ type: [AdminQuestionDto] })
+  drafts: AdminQuestionDto[];
 }

@@ -51,3 +51,21 @@ export const csvRowSchema = z.object({
   sourceExam: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
 });
 export type CsvRow = z.infer<typeof csvRowSchema>;
+
+export const aiDraftRequestSchema = z.object({
+  topicId: z.string().min(1),
+  count: z.number().int().min(1).max(10).default(5),
+  difficulty: difficultyEnum.default('MEDIUM'),
+  language: questionLanguageEnum,
+});
+export type AiDraftRequest = z.infer<typeof aiDraftRequestSchema>;
+
+/** Shape the model must return — a strict JSON array of drafts. */
+export const aiDraftResponseSchema = z.array(
+  z.object({
+    stem: z.string().min(1),
+    options: z.array(z.string().min(1)).length(4),
+    correctIndex: z.number().int().min(0).max(3),
+    explanation: z.string().min(1),
+  }),
+);

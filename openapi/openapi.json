@@ -993,6 +993,55 @@
           "admin/import"
         ]
       }
+    },
+    "/api/admin/import/ai-drafts": {
+      "post": {
+        "operationId": "ImportController_generateAiDrafts",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiDraftRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiDraftReportDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Requires ADMIN role"
+          },
+          "502": {
+            "description": "AI provider failed or returned garbage"
+          },
+          "503": {
+            "description": "ANTHROPIC_API_KEY is not configured"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate AI question drafts — always AI_GENERATED + IN_REVIEW, never published",
+        "tags": [
+          "admin/import"
+        ]
+      }
     }
   },
   "info": {
@@ -2177,6 +2226,77 @@
           "skippedDuplicates",
           "failed",
           "rowErrors"
+        ]
+      },
+      "AiDraftRequestDto": {
+        "type": "object",
+        "properties": {
+          "topicId": {
+            "type": "string",
+            "description": "Topic the drafts belong to"
+          },
+          "count": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 5
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "EASY",
+              "MEDIUM",
+              "HARD"
+            ],
+            "default": "MEDIUM"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "BN",
+              "EN"
+            ]
+          }
+        },
+        "required": [
+          "topicId",
+          "language"
+        ]
+      },
+      "AiDraftReportDto": {
+        "type": "object",
+        "properties": {
+          "requested": {
+            "type": "number",
+            "example": 5
+          },
+          "created": {
+            "type": "number",
+            "example": 4,
+            "description": "Drafts created as AI_GENERATED + IN_REVIEW"
+          },
+          "skippedDuplicates": {
+            "type": "number",
+            "example": 1
+          },
+          "failed": {
+            "type": "number",
+            "example": 0,
+            "description": "Drafts the model returned malformed"
+          },
+          "drafts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminQuestionDto"
+            }
+          }
+        },
+        "required": [
+          "requested",
+          "created",
+          "skippedDuplicates",
+          "failed",
+          "drafts"
         ]
       }
     }

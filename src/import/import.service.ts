@@ -1,14 +1,34 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CSV_COLUMNS, csvRowSchema } from '../domain/import.schema';
+import {
+  BadGatewayException,
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
+import {
+  AiDraftRequest,
+  aiDraftResponseSchema,
+  CSV_COLUMNS,
+  csvRowSchema,
+} from '../domain/import.schema';
 import { questionCreateSchema } from '../domain/question.schema';
 import { stemHash } from '../domain/stem-hash';
 import { PrismaService } from '../prisma/prisma.service';
+import { QuestionsService } from '../questions/questions.service';
+import { AiClient } from './ai-client';
 import { parseCsv } from './csv-parser';
-import { ImportReportDto, RowErrorDto } from './dto/import.dto';
+import {
+  AiDraftReportDto,
+  ImportReportDto,
+  RowErrorDto,
+} from './dto/import.dto';
 
 @Injectable()
 export class ImportService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly questions: QuestionsService,
+    private readonly aiClient: AiClient,
+  ) {}
 
   async importCsv(buffer: Buffer): Promise<ImportReportDto> {
     const { header, rows } = parseCsv(buffer.toString('utf8'));
@@ -142,5 +162,112 @@ export class ImportService {
     }
 
     return report;
+  }
+
+  async generateAiDrafts(input: AiDraftRequest): Promise<AiDraftReportDto> {
+    const topic = await this.prisma.topic.findUnique({
+      where: { id: input.topicId },
+      select: {
+        name: true,
+        subject: {
+          select: { name: true, exam: { select: { name: true } } },
+        },
+      },
+    });
+    if (!topic) {
+      throw new BadRequestException('Unknown topicId');
+    }
+
+    const raw = await this.aiClient.generateDrafts(
+      ImportService.buildDraftPrompt({
+        examName: topic.subject.exam.name,
+        subjectName: topic.subject.name,
+        topicName: topic.name,
+        count: input.count,
+        difficulty: input.difficulty,
+        language: input.language,
+      }),
+    );
+
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(ImportService.extractJson(raw));
+    } catch {
+      throw new BadGatewayException('Model returned unparseable output');
+    }
+    const drafts = aiDraftResponseSchema.safeParse(parsedJson);
+    if (!drafts.success) {
+      throw new BadGatewayException('Model returned invalid draft structure');
+    }
+
+    const report: AiDraftReportDto = {
+      requested: input.count,
+      created: 0,
+      skippedDuplicates: 0,
+      failed: 0,
+      drafts: [],
+    };
+    for (const draft of drafts.data) {
+      // Reuse the one invariant source. This path can NEVER publish:
+      // status is hardcoded IN_REVIEW and the create schema additionally
+      // rejects AI_GENERATED + PUBLISHED.
+      const candidate = questionCreateSchema.safeParse({
+        topicId: input.topicId,
+        stem: draft.stem,
+        options: draft.options,
+        correctIndex: draft.correctIndex,
+        explanation: draft.explanation,
+        difficulty: input.difficulty,
+        sourceType: 'AI_GENERATED',
+        status: 'IN_REVIEW',
+        language: input.language,
+      });
+      if (!candidate.success) {
+        report.failed += 1;
+        continue;
+      }
+      try {
+        // QuestionsService.create sets stemHash and 409s on duplicates.
+        report.drafts.push(await this.questions.create(candidate.data));
+        report.created += 1;
+      } catch (error) {
+        if (error instanceof ConflictException) {
+          report.skippedDuplicates += 1;
+        } else {
+          report.failed += 1;
+        }
+      }
+    }
+    return report;
+  }
+
+  private static buildDraftPrompt(args: {
+    examName: string;
+    subjectName: string;
+    topicName: string;
+    count: number;
+    difficulty: string;
+    language: string;
+  }): string {
+    const languageLabel = args.language === 'BN' ? 'Bangla (বাংলা)' : 'English';
+    return [
+      `You are generating multiple-choice questions for "${args.examName}" exam preparation.`,
+      `Subject: ${args.subjectName}. Topic: ${args.topicName}. Difficulty: ${args.difficulty}.`,
+      `Language for stems, options and explanations: ${languageLabel}.`,
+      '',
+      `Generate exactly ${args.count} questions. Requirements:`,
+      '- Factually correct and unambiguous — exactly one clearly correct answer each.',
+      '- Exactly 4 options; distractors plausible but definitely wrong.',
+      '- Explanation: one or two sentences, same language as the stem.',
+      '- No opinion-based, trick, or time-sensitive questions.',
+      '',
+      'Respond with ONLY a JSON array — no prose, no markdown fences:',
+      '[{"stem": "...", "options": ["...", "...", "...", "..."], "correctIndex": 0, "explanation": "..."}]',
+    ].join('\n');
+  }
+
+  private static extractJson(text: string): string {
+    const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(text);
+    return (fenced ? fenced[1] : text).trim();
   }
 }

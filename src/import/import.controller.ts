@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   HttpCode,
   HttpStatus,
@@ -10,19 +11,28 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBadGatewayResponse,
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiServiceUnavailableResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { ImportReportDto } from './dto/import.dto';
+import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import { aiDraftRequestSchema } from '../domain/import.schema';
+import type { AiDraftRequest } from '../domain/import.schema';
+import {
+  AiDraftReportDto,
+  AiDraftRequestDto,
+  ImportReportDto,
+} from './dto/import.dto';
 import { ImportService } from './import.service';
 
 /** Minimal shape of the multer file — avoids the @types/multer dependency. */
@@ -67,5 +77,25 @@ export class ImportController {
       );
     }
     return this.importService.importCsv(file.buffer);
+  }
+
+  @Post('ai-drafts')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Generate AI question drafts — always AI_GENERATED + IN_REVIEW, never published',
+  })
+  @ApiBody({ type: AiDraftRequestDto })
+  @ApiOkResponse({ type: AiDraftReportDto })
+  @ApiServiceUnavailableResponse({
+    description: 'ANTHROPIC_API_KEY is not configured',
+  })
+  @ApiBadGatewayResponse({
+    description: 'AI provider failed or returned garbage',
+  })
+  generateAiDrafts(
+    @Body(new ZodValidationPipe(aiDraftRequestSchema)) body: AiDraftRequest,
+  ): Promise<AiDraftReportDto> {
+    return this.importService.generateAiDrafts(body);
   }
 }
