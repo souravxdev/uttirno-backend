@@ -8,6 +8,7 @@
  */
 import { PrismaPg } from '@prisma/adapter-pg';
 import { hash } from 'argon2';
+import { stemHash } from '../src/domain/stem-hash';
 import { PrismaClient } from '../src/generated/prisma/client';
 
 try {
@@ -267,6 +268,17 @@ async function seedQuestions(topicIds: Record<string, string>) {
       },
     ],
   });
+
+  // Backfill dedupe hashes — every question write path must set stemHash.
+  const seeded = await prisma.question.findMany({
+    select: { id: true, stem: true },
+  });
+  for (const q of seeded) {
+    await prisma.question.update({
+      where: { id: q.id },
+      data: { stemHash: stemHash(q.stem) },
+    });
+  }
 }
 
 async function main() {

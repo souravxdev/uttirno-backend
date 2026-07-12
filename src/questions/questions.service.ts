@@ -11,6 +11,7 @@ import {
   QuestionUpdateInput,
   questionMergedSchema,
 } from '../domain/question.schema';
+import { stemHash } from '../domain/stem-hash';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   AdminQuestionDto,
@@ -93,15 +94,20 @@ export class QuestionsService {
 
   async create(input: QuestionCreateInput): Promise<AdminQuestionDto> {
     await this.assertTopicExists(input.topicId);
-    const question = await this.prisma.question.create({
-      data: {
-        ...input,
-        sourceYear: input.sourceYear ?? null,
-        sourceExam: input.sourceExam ?? null,
-      },
-      include: TOPIC_INCLUDE,
-    });
-    return QuestionsService.toAdminDto(question);
+    try {
+      const question = await this.prisma.question.create({
+        data: {
+          ...input,
+          stemHash: stemHash(input.stem),
+          sourceYear: input.sourceYear ?? null,
+          sourceExam: input.sourceExam ?? null,
+        },
+        include: TOPIC_INCLUDE,
+      });
+      return QuestionsService.toAdminDto(question);
+    } catch (error) {
+      throw QuestionsService.mapDuplicateStem(error);
+    }
   }
 
   async findOne(id: string): Promise<AdminQuestionDto> {
@@ -152,16 +158,21 @@ export class QuestionsService {
       await this.assertTopicExists(patch.topicId);
     }
 
-    const question = await this.prisma.question.update({
-      where: { id },
-      data: {
-        ...merged.data,
-        sourceYear: merged.data.sourceYear ?? null,
-        sourceExam: merged.data.sourceExam ?? null,
-      },
-      include: TOPIC_INCLUDE,
-    });
-    return QuestionsService.toAdminDto(question);
+    try {
+      const question = await this.prisma.question.update({
+        where: { id },
+        data: {
+          ...merged.data,
+          stemHash: stemHash(merged.data.stem),
+          sourceYear: merged.data.sourceYear ?? null,
+          sourceExam: merged.data.sourceExam ?? null,
+        },
+        include: TOPIC_INCLUDE,
+      });
+      return QuestionsService.toAdminDto(question);
+    } catch (error) {
+      throw QuestionsService.mapDuplicateStem(error);
+    }
   }
 
   async remove(id: string): Promise<void> {
@@ -218,6 +229,15 @@ export class QuestionsService {
       this.prisma.question.count({ where }),
     ]);
     return { items, total };
+  }
+
+  private static mapDuplicateStem(error: unknown): unknown {
+    if ((error as { code?: string }).code === 'P2002') {
+      return new ConflictException(
+        'A question with the same stem already exists',
+      );
+    }
+    return error;
   }
 
   private async assertTopicExists(topicId: string): Promise<void> {

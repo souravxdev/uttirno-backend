@@ -92,6 +92,7 @@ model Question {
   topicId      String
   topic        Topic            @relation(fields: [topicId], references: [id])
   stem         String
+  stemHash     String?          @unique
   options      String[]
   correctIndex Int
   explanation  String
