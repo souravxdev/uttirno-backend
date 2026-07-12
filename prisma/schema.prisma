@@ -1,0 +1,156 @@
+// Uttirno data model — POC scope: BCS Preliminary only.
+// Data invariants that Prisma cannot express (PAST_PAPER ⇒ sourceYear+sourceExam,
+// correctIndex bounds) are enforced as CHECK constraints in the initial
+// migration AND in zod at the service layer.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  LEARNER
+  ADMIN
+}
+
+enum SourceType {
+  PAST_PAPER
+  ORIGINAL
+  AI_GENERATED
+}
+
+enum QuestionStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+}
+
+enum QuestionLanguage {
+  BN
+  EN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuizSessionStatus {
+  CREATED
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+}
+
+model Exam {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  name      String
+  subjects  Subject[]
+  sessions  QuizSession[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id])
+  slug      String
+  name      String
+  order     Int      @default(0)
+  topics    Topic[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([examId, slug])
+}
+
+model Topic {
+  id        String     @id @default(cuid())
+  subjectId String
+  subject   Subject    @relation(fields: [subjectId], references: [id])
+  slug      String
+  name      String
+  order     Int        @default(0)
+  questions Question[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([subjectId, slug])
+}
+
+model Question {
+  id           String           @id @default(cuid())
+  topicId      String
+  topic        Topic            @relation(fields: [topicId], references: [id])
+  stem         String
+  options      String[]
+  correctIndex Int
+  explanation  String
+  difficulty   Difficulty       @default(MEDIUM)
+  sourceType   SourceType
+  sourceYear   Int?
+  sourceExam   String?
+  status       QuestionStatus   @default(DRAFT)
+  language     QuestionLanguage
+  answers      Answer[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([topicId, status])
+  @@index([sourceYear])
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String?
+  role         Role          @default(LEARNER)
+  sessions     QuizSession[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model QuizSession {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id])
+  examId        String
+  exam          Exam              @relation(fields: [examId], references: [id])
+  status        QuizSessionStatus @default(CREATED)
+  questionCount Int
+  timeLimitSec  Int
+  startedAt     DateTime?
+  expiresAt     DateTime?
+  submittedAt   DateTime?
+  score         Decimal?          @db.Decimal(6, 2)
+  answers       Answer[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([userId, status])
+}
+
+model Answer {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      Question    @relation(fields: [questionId], references: [id])
+  selectedIndex Int?
+  isCorrect     Boolean?
+  timeTakenSec  Int?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([sessionId, questionId])
+}
