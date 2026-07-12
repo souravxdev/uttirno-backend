@@ -127,6 +127,7 @@ export class QuizSessionsService {
         order: true,
         questionId: true,
         selectedIndex: true,
+        flagged: true,
         question: { select: { stem: true, options: true, language: true } },
       },
     });
@@ -154,6 +155,7 @@ export class QuizSessionsService {
         options: answer.question.options,
         language: answer.question.language,
         selectedIndex: answer.selectedIndex,
+        flagged: answer.flagged,
       })),
     };
   }
@@ -179,19 +181,42 @@ export class QuizSessionsService {
       throw new ConflictException('Time is up — session has ended');
     }
 
-    const saved = await this.prisma.answer.updateMany({
-      where: { sessionId: id, questionId: input.questionId },
-      data: {
-        selectedIndex: input.selectedIndex,
-        timeTakenSec: input.timeTakenSec,
-      },
-    });
-    if (saved.count === 0) {
-      throw new BadRequestException('Question is not part of this session');
+    // Partial update: only the fields present in the request are touched, so
+    // a flag-only save never clobbers the saved selection and vice versa.
+    const data: {
+      selectedIndex?: number | null;
+      flagged?: boolean;
+      timeTakenSec?: number;
+    } = {};
+    if (input.selectedIndex !== undefined) {
+      data.selectedIndex = input.selectedIndex;
+    }
+    if (input.flagged !== undefined) {
+      data.flagged = input.flagged;
+    }
+    if (input.timeTakenSec !== undefined) {
+      data.timeTakenSec = input.timeTakenSec;
+    }
+
+    let saved: { selectedIndex: number | null; flagged: boolean };
+    try {
+      saved = await this.prisma.answer.update({
+        where: {
+          sessionId_questionId: { sessionId: id, questionId: input.questionId },
+        },
+        data,
+        select: { selectedIndex: true, flagged: true },
+      });
+    } catch (error) {
+      if ((error as { code?: string }).code === 'P2025') {
+        throw new BadRequestException('Question is not part of this session');
+      }
+      throw error;
     }
     return {
       questionId: input.questionId,
-      selectedIndex: input.selectedIndex,
+      selectedIndex: saved.selectedIndex,
+      flagged: saved.flagged,
       remainingSec: Math.max(
         0,
         Math.ceil((session.expiresAt.getTime() - now) / 1000),
@@ -245,6 +270,7 @@ export class QuizSessionsService {
         order: true,
         questionId: true,
         selectedIndex: true,
+        flagged: true,
         isCorrect: true,
         question: {
           select: {
@@ -333,6 +359,7 @@ export class QuizSessionsService {
         options: answer.question.options,
         language: answer.question.language,
         selectedIndex: answer.selectedIndex,
+        flagged: answer.flagged,
         correctIndex: answer.question.correctIndex,
         isCorrect: answer.isCorrect,
         explanation: answer.question.explanation,

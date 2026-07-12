@@ -35,14 +35,22 @@ export class SaveAnswerRequestDto {
   @ApiProperty()
   questionId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Number,
     nullable: true,
     minimum: 0,
     maximum: 3,
-    description: 'null clears the selection (question counts as skipped)',
+    description:
+      'Omit to leave the selection unchanged (flag-only save); ' +
+      'null clears it (question counts as skipped); a number sets it',
   })
-  selectedIndex: number | null;
+  selectedIndex?: number | null;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Mark/unmark the question for review; survives resume',
+  })
+  flagged?: boolean;
 
   @ApiPropertyOptional({ minimum: 0 })
   timeTakenSec?: number;
@@ -108,6 +116,12 @@ export class SessionQuestionDto {
     description: 'Previously saved selection (resume support)',
   })
   selectedIndex: number | null;
+
+  @ApiProperty({
+    type: Boolean,
+    description: 'Marked for review (resume support)',
+  })
+  flagged: boolean;
 }
 
 export class SessionPlayStateDto {
@@ -147,6 +161,9 @@ export class SaveAnswerResponseDto {
   @ApiProperty({ type: Number, nullable: true })
   selectedIndex: number | null;
 
+  @ApiProperty({ type: Boolean })
+  flagged: boolean;
+
   @ApiProperty({ description: 'Server-computed seconds left' })
   remainingSec: number;
 }
@@ -169,6 +186,9 @@ export class SessionResultItemDto {
 
   @ApiProperty({ type: Number, nullable: true })
   selectedIndex: number | null;
+
+  @ApiProperty({ type: Boolean })
+  flagged: boolean;
 
   @ApiProperty({ minimum: 0, maximum: 3 })
   correctIndex: number;

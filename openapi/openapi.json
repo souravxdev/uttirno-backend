@@ -1957,6 +1957,10 @@
             "type": "number",
             "nullable": true,
             "description": "Previously saved selection (resume support)"
+          },
+          "flagged": {
+            "type": "boolean",
+            "description": "Marked for review (resume support)"
           }
         },
         "required": [
@@ -1965,7 +1969,8 @@
           "stem",
           "options",
           "language",
-          "selectedIndex"
+          "selectedIndex",
+          "flagged"
         ]
       },
       "SessionPlayStateDto": {
@@ -2033,7 +2038,11 @@
             "nullable": true,
             "minimum": 0,
             "maximum": 3,
-            "description": "null clears the selection (question counts as skipped)"
+            "description": "Omit to leave the selection unchanged (flag-only save); null clears it (question counts as skipped); a number sets it"
+          },
+          "flagged": {
+            "type": "boolean",
+            "description": "Mark/unmark the question for review; survives resume"
           },
           "timeTakenSec": {
             "type": "number",
@@ -2041,8 +2050,7 @@
           }
         },
         "required": [
-          "questionId",
-          "selectedIndex"
+          "questionId"
         ]
       },
       "SaveAnswerResponseDto": {
@@ -2055,6 +2063,9 @@
             "type": "number",
             "nullable": true
           },
+          "flagged": {
+            "type": "boolean"
+          },
           "remainingSec": {
             "type": "number",
             "description": "Server-computed seconds left"
@@ -2063,6 +2074,7 @@
         "required": [
           "questionId",
           "selectedIndex",
+          "flagged",
           "remainingSec"
         ]
       },
@@ -2173,6 +2185,9 @@
             "type": "number",
             "nullable": true
           },
+          "flagged": {
+            "type": "boolean"
+          },
           "correctIndex": {
             "type": "number",
             "minimum": 0,
@@ -2194,6 +2209,7 @@
           "options",
           "language",
           "selectedIndex",
+          "flagged",
           "correctIndex",
           "isCorrect",
           "explanation"

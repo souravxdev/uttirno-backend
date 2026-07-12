@@ -264,6 +264,58 @@ describe('Quiz sessions (e2e)', () => {
     expect(entry.score).toBe(1.5);
   });
 
+  it('persists flag-for-review and never clobbers the saved selection', async () => {
+    const play = await startSession(3);
+    const [q0] = play.questions;
+    const chosen = await correctIndexOf(q0.questionId);
+
+    // Save a selection first.
+    await server()
+      .patch(`/api/sessions/${play.id}/answers`)
+      .set('Authorization', auth(token))
+      .send({ questionId: q0.questionId, selectedIndex: chosen })
+      .expect(200);
+
+    // Flag-only save: no selectedIndex in the body.
+    const flagged = await server()
+      .patch(`/api/sessions/${play.id}/answers`)
+      .set('Authorization', auth(token))
+      .send({ questionId: q0.questionId, flagged: true })
+      .expect(200);
+    // The ack echoes the untouched selection and the new flag.
+    expect(
+      (flagged.body as { selectedIndex: number | null }).selectedIndex,
+    ).toBe(chosen);
+    expect((flagged.body as { flagged: boolean }).flagged).toBe(true);
+
+    // Resume shows both the selection and the flag.
+    const resumed = await server()
+      .get(`/api/sessions/${play.id}/play`)
+      .set('Authorization', auth(token))
+      .expect(200);
+    const q0After = (resumed.body as SessionPlayStateDto).questions.find(
+      (q) => q.questionId === q0.questionId,
+    )!;
+    expect(q0After.selectedIndex).toBe(chosen);
+    expect(q0After.flagged).toBe(true);
+
+    // Unflagging leaves the selection intact.
+    await server()
+      .patch(`/api/sessions/${play.id}/answers`)
+      .set('Authorization', auth(token))
+      .send({ questionId: q0.questionId, flagged: false })
+      .expect(200);
+    const resumed2 = await server()
+      .get(`/api/sessions/${play.id}/play`)
+      .set('Authorization', auth(token))
+      .expect(200);
+    const q0Final = (resumed2.body as SessionPlayStateDto).questions.find(
+      (q) => q.questionId === q0.questionId,
+    )!;
+    expect(q0Final.selectedIndex).toBe(chosen);
+    expect(q0Final.flagged).toBe(false);
+  });
+
   it('guards the state machine (double start, unstarted submit/save)', async () => {
     const created = await server()
       .post('/api/sessions')

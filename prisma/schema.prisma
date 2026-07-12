@@ -149,6 +149,7 @@ model Answer {
   question      Question    @relation(fields: [questionId], references: [id])
   order         Int         @default(0)
   selectedIndex Int?
+  flagged       Boolean     @default(false)
   isCorrect     Boolean?
   timeTakenSec  Int?
   createdAt     DateTime    @default(now())

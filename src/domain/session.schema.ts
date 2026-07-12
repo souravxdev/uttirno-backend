@@ -11,8 +11,12 @@ export type CreateSessionInput = z.infer<typeof createSessionSchema>;
 
 export const saveAnswerSchema = z.object({
   questionId: z.string().min(1),
-  // null clears a previous selection (question becomes skipped again)
-  selectedIndex: z.number().int().min(0).max(3).nullable(),
+  // Absent = leave the selection unchanged (used by flag-only saves);
+  // null = clear a previous selection (question becomes skipped again);
+  // number = set the selection.
+  selectedIndex: z.number().int().min(0).max(3).nullable().optional(),
+  // Mark/unmark the question for review; survives resume.
+  flagged: z.boolean().optional(),
   timeTakenSec: z.number().int().min(0).optional(),
 });
 export type SaveAnswerInput = z.infer<typeof saveAnswerSchema>;
