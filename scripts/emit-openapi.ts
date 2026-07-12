@@ -28,6 +28,7 @@ async function emitOpenApi(): Promise<void> {
         'This spec is the single source of truth for frontend API types.',
     )
     .setVersion(version)
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

@@ -7,6 +7,7 @@
  * Run with: pnpm db:seed  (wipes and recreates all questions)
  */
 import { PrismaPg } from '@prisma/adapter-pg';
+import { hash } from 'argon2';
 import { PrismaClient } from '../src/generated/prisma/client';
 
 try {
@@ -19,6 +20,31 @@ const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL ?? '',
 });
 const prisma = new PrismaClient({ adapter });
+
+// Dev-only accounts; password for both: uttirno-dev
+async function upsertUsers() {
+  const passwordHash = await hash('uttirno-dev');
+  await prisma.user.upsert({
+    where: { email: 'admin@uttirno.test' },
+    update: {},
+    create: {
+      email: 'admin@uttirno.test',
+      name: 'Dev Admin',
+      role: 'ADMIN',
+      passwordHash,
+    },
+  });
+  await prisma.user.upsert({
+    where: { email: 'learner@uttirno.test' },
+    update: {},
+    create: {
+      email: 'learner@uttirno.test',
+      name: 'রাহিম উদ্দিন',
+      role: 'LEARNER',
+      passwordHash,
+    },
+  });
+}
 
 async function upsertTaxonomy() {
   const exam = await prisma.exam.upsert({
@@ -244,6 +270,7 @@ async function seedQuestions(topicIds: Record<string, string>) {
 }
 
 async function main() {
+  await upsertUsers();
   const topicIds = await upsertTaxonomy();
   await seedQuestions(topicIds);
 
