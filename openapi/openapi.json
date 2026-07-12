@@ -157,6 +157,31 @@
           "auth"
         ]
       }
+    },
+    "/api/taxonomy/tree": {
+      "get": {
+        "operationId": "TaxonomyController_getTree",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExamTreeDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Exam → subject → topic tree with published-question counts",
+        "tags": [
+          "taxonomy"
+        ]
+      }
     }
   },
   "info": {
@@ -314,6 +339,99 @@
         },
         "required": [
           "refreshToken"
+        ]
+      },
+      "TopicTreeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "example": "sahitto"
+          },
+          "name": {
+            "type": "string",
+            "example": "সাহিত্য"
+          },
+          "order": {
+            "type": "number",
+            "example": 1
+          },
+          "publishedQuestionCount": {
+            "type": "number",
+            "example": 2,
+            "description": "Number of PUBLISHED questions in this topic"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "order",
+          "publishedQuestionCount"
+        ]
+      },
+      "SubjectTreeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "example": "bangla"
+          },
+          "name": {
+            "type": "string",
+            "example": "বাংলা"
+          },
+          "order": {
+            "type": "number",
+            "example": 1
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopicTreeDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "order",
+          "topics"
+        ]
+      },
+      "ExamTreeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "example": "bcs-preliminary"
+          },
+          "name": {
+            "type": "string",
+            "example": "বিসিএস প্রিলিমিনারি"
+          },
+          "subjects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectTreeDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "subjects"
         ]
       }
     }
