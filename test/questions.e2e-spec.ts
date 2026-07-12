@@ -192,6 +192,87 @@ describe('Questions (e2e)', () => {
     });
   });
 
+  describe('review actions', () => {
+    it('approve publishes a DRAFT question and it appears publicly', async () => {
+      const created = await server()
+        .post('/api/admin/questions')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(
+          validQuestion({
+            stem: `${STEM_MARKER} approve-flow: বাংলা গদ্যের জনক কে?`,
+            options: [
+              'ঈশ্বরচন্দ্র বিদ্যাসাগর',
+              'রাজা রামমোহন রায়',
+              'বঙ্কিমচন্দ্র চট্টোপাধ্যায়',
+              'প্যারীচাঁদ মিত্র',
+            ],
+          }),
+        )
+        .expect(201);
+      const question = created.body as AdminQuestionDto;
+      expect(question.status).toBe('DRAFT');
+
+      const approved = await server()
+        .post(`/api/admin/questions/${question.id}/approve`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect((approved.body as AdminQuestionDto).status).toBe('PUBLISHED');
+
+      const publicList = await server()
+        .get('/api/questions?pageSize=100')
+        .expect(200);
+      expect(JSON.stringify(publicList.body)).toContain('approve-flow');
+
+      // Already PUBLISHED → not approvable again.
+      await server()
+        .post(`/api/admin/questions/${question.id}/approve`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(409);
+
+      await server()
+        .delete(`/api/admin/questions/${question.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(204);
+    });
+
+    it('reject returns IN_REVIEW to DRAFT — and only IN_REVIEW', async () => {
+      const created = await server()
+        .post('/api/admin/questions')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(
+          validQuestion({
+            stem: `${STEM_MARKER} reject-flow: sample under review`,
+            status: 'IN_REVIEW',
+          }),
+        )
+        .expect(201);
+      const question = created.body as AdminQuestionDto;
+
+      // Learner cannot review.
+      await server()
+        .post(`/api/admin/questions/${question.id}/reject`)
+        .set('Authorization', `Bearer ${learnerToken}`)
+        .expect(403);
+
+      const rejected = await server()
+        .post(`/api/admin/questions/${question.id}/reject`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect((rejected.body as AdminQuestionDto).status).toBe('DRAFT');
+
+      // DRAFT is not rejectable.
+      await server()
+        .post(`/api/admin/questions/${question.id}/reject`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(409);
+
+      await server()
+        .delete(`/api/admin/questions/${question.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(204);
+    });
+  });
+
   describe('admin CRUD — lifecycle', () => {
     let created: AdminQuestionDto;
 

@@ -4,6 +4,8 @@ export const createSessionSchema = z.object({
   questionCount: z.number().int().min(1).max(200),
   timeLimitSec: z.number().int().min(60).max(14400),
   subjects: z.array(z.string().min(1)).min(1).optional(),
+  // Topic-level filter (slugs) — used by practice mode.
+  topics: z.array(z.string().min(1)).min(1).optional(),
 });
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
 

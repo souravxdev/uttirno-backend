@@ -22,6 +22,13 @@ export class CreateSessionRequestDto {
     description: 'Restrict questions to these subject slugs',
   })
   subjects?: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['byakoron'],
+    description: 'Restrict questions to these topic slugs (practice mode)',
+  })
+  topics?: string[];
 }
 
 export class SaveAnswerRequestDto {

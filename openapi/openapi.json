@@ -598,6 +598,102 @@
         ]
       }
     },
+    "/api/admin/questions/{id}/approve": {
+      "post": {
+        "operationId": "AdminQuestionsController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuestionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Requires ADMIN role"
+          },
+          "404": {
+            "description": "Question not found"
+          },
+          "409": {
+            "description": "Question is not in an approvable state"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve (review action): DRAFT | IN_REVIEW → PUBLISHED",
+        "tags": [
+          "admin/questions"
+        ]
+      }
+    },
+    "/api/admin/questions/{id}/reject": {
+      "post": {
+        "operationId": "AdminQuestionsController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuestionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          },
+          "403": {
+            "description": "Requires ADMIN role"
+          },
+          "404": {
+            "description": "Question not found"
+          },
+          "409": {
+            "description": "Only IN_REVIEW questions can be rejected"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject (review action): IN_REVIEW → DRAFT",
+        "tags": [
+          "admin/questions"
+        ]
+      }
+    },
     "/api/sessions": {
       "get": {
         "operationId": "QuizSessionsController_history",
@@ -1807,6 +1903,16 @@
               "general-knowledge"
             ],
             "description": "Restrict questions to these subject slugs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "topics": {
+            "example": [
+              "byakoron"
+            ],
+            "description": "Restrict questions to these topic slugs (practice mode)",
             "type": "array",
             "items": {
               "type": "string"

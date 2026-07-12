@@ -125,6 +125,32 @@ export class AdminQuestionsController {
     return this.questions.update(id, body);
   }
 
+  @Post(':id/approve')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Approve (review action): DRAFT | IN_REVIEW → PUBLISHED',
+  })
+  @ApiOkResponse({ type: AdminQuestionDto })
+  @ApiNotFoundResponse({ description: 'Question not found' })
+  @ApiConflictResponse({
+    description: 'Question is not in an approvable state',
+  })
+  approve(@Param('id') id: string): Promise<AdminQuestionDto> {
+    return this.questions.approve(id);
+  }
+
+  @Post(':id/reject')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reject (review action): IN_REVIEW → DRAFT' })
+  @ApiOkResponse({ type: AdminQuestionDto })
+  @ApiNotFoundResponse({ description: 'Question not found' })
+  @ApiConflictResponse({
+    description: 'Only IN_REVIEW questions can be rejected',
+  })
+  reject(@Param('id') id: string): Promise<AdminQuestionDto> {
+    return this.questions.reject(id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a question' })

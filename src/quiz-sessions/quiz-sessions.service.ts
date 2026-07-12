@@ -53,6 +53,7 @@ export class QuizSessionsService {
     const questionIds = await this.pickRandomPublishedIds(
       input.questionCount,
       input.subjects,
+      input.topics,
     );
     if (questionIds.length < input.questionCount) {
       throw new BadRequestException(
@@ -453,22 +454,20 @@ export class QuizSessionsService {
   private async pickRandomPublishedIds(
     count: number,
     subjects?: string[],
+    topics?: string[],
   ): Promise<string[]> {
-    const rows = subjects?.length
-      ? await this.prisma.$queryRaw<Array<{ id: string }>>`
-          SELECT q.id
-          FROM "Question" q
-          JOIN "Topic" t ON t.id = q."topicId"
-          JOIN "Subject" s ON s.id = t."subjectId"
-          WHERE q.status = 'PUBLISHED' AND s.slug = ANY(${subjects})
-          ORDER BY random()
-          LIMIT ${count}`
-      : await this.prisma.$queryRaw<Array<{ id: string }>>`
-          SELECT q.id
-          FROM "Question" q
-          WHERE q.status = 'PUBLISHED'
-          ORDER BY random()
-          LIMIT ${count}`;
+    const subjectFilter = subjects?.length ? subjects : null;
+    const topicFilter = topics?.length ? topics : null;
+    const rows = await this.prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT q.id
+      FROM "Question" q
+      JOIN "Topic" t ON t.id = q."topicId"
+      JOIN "Subject" s ON s.id = t."subjectId"
+      WHERE q.status = 'PUBLISHED'
+        AND (${subjectFilter}::text[] IS NULL OR s.slug = ANY(${subjectFilter}::text[]))
+        AND (${topicFilter}::text[] IS NULL OR t.slug = ANY(${topicFilter}::text[]))
+      ORDER BY random()
+      LIMIT ${count}`;
     return rows.map((row) => row.id);
   }
 

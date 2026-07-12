@@ -175,6 +175,50 @@ export class QuestionsService {
     }
   }
 
+  /** Review action: DRAFT | IN_REVIEW → PUBLISHED. */
+  async approve(id: string): Promise<AdminQuestionDto> {
+    return this.transition(
+      id,
+      ['DRAFT', 'IN_REVIEW'],
+      'PUBLISHED',
+      'Only DRAFT or IN_REVIEW questions can be approved',
+    );
+  }
+
+  /** Review action: IN_REVIEW → DRAFT. */
+  async reject(id: string): Promise<AdminQuestionDto> {
+    return this.transition(
+      id,
+      ['IN_REVIEW'],
+      'DRAFT',
+      'Only IN_REVIEW questions can be rejected',
+    );
+  }
+
+  private async transition(
+    id: string,
+    from: AdminQuestionDto['status'][],
+    to: AdminQuestionDto['status'],
+    conflictMessage: string,
+  ): Promise<AdminQuestionDto> {
+    const existing = await this.prisma.question.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Question not found');
+    }
+    // Status-guarded updateMany: concurrent transitions resolve to one winner.
+    const flipped = await this.prisma.question.updateMany({
+      where: { id, status: { in: from } },
+      data: { status: to },
+    });
+    if (flipped.count === 0) {
+      throw new ConflictException(conflictMessage);
+    }
+    return this.findOne(id);
+  }
+
   async remove(id: string): Promise<void> {
     const existing = await this.prisma.question.findUnique({
       where: { id },

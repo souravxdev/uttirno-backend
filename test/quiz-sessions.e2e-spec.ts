@@ -120,6 +120,31 @@ describe('Quiz sessions (e2e)', () => {
       .expect(400);
   });
 
+  it('respects the topics filter (practice mode)', async () => {
+    const created = await server()
+      .post('/api/sessions')
+      .set('Authorization', auth(token))
+      .send({ questionCount: 1, timeLimitSec: 300, topics: ['byakoron'] })
+      .expect(201);
+    const id = (created.body as SessionSummaryDto).id;
+
+    const answers = await prisma.answer.findMany({
+      where: { sessionId: id },
+      select: {
+        question: { select: { topic: { select: { slug: true } } } },
+      },
+    });
+    expect(answers).toHaveLength(1);
+    expect(answers[0].question.topic.slug).toBe('byakoron');
+
+    // byakoron has a single PUBLISHED question in the seed.
+    await server()
+      .post('/api/sessions')
+      .set('Authorization', auth(token))
+      .send({ questionCount: 5, timeLimitSec: 300, topics: ['byakoron'] })
+      .expect(400);
+  });
+
   it('never leaks correctIndex or explanation before submission', async () => {
     const play = await startSession(4);
     const raw = JSON.stringify(play);
